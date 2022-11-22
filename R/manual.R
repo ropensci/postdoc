@@ -15,7 +15,7 @@
 #' this other package. Set to `NULL` to drop cross-package links.
 #' @export
 #' @return path to the generated html document
-#' @examples htmlfile <- render_package_manual('nnet', tempdir())
+#' @examples htmlfile <- render_package_manual('parallel', tempdir())
 #' utils::browseURL(htmlfile)
 render_package_manual <- function(package, outdir = '.', link_cb = r_universe_link){
   desc <- package_desc(package)

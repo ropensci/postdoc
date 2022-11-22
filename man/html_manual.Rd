@@ -31,6 +31,6 @@ JavaScript libraries are needed in the browser, which makes the documents
 portable and fast to load.
 }
 \examples{
-htmlfile <- render_package_manual('nnet', tempdir())
+htmlfile <- render_package_manual('parallel', tempdir())
 utils::browseURL(htmlfile)
 }
