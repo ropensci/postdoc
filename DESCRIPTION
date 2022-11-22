@@ -15,7 +15,6 @@ Encoding: UTF-8
 Imports: 
     jsonlite,
     katex,
-    memoise,
     prismjs,
     xml2
 RoxygenNote: 7.2.1

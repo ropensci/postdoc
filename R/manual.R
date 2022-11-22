@@ -168,7 +168,7 @@ get_rd_name <- function(rd){
 
 fix_links <- function(doc, package, link_cb){
   get_link <- if(is.function(link_cb)){
-    memoise::memoise(link_cb)
+    simple_cache(link_cb)
   }
   installdir <- system.file(package = package, mustWork = TRUE)
   aliases <- readRDS(file.path(installdir, "help", "aliases.rds"))
@@ -230,7 +230,18 @@ list_universe_packages_internal <- function(universe){
   }
 }
 
-universe_list <- memoise::memoise(list_universe_packages_internal)
+simple_cache <- function(fun){
+  cache <- new.env(parent = emptyenv())
+  function(arg){
+    key <- gsub("\n", "", jsonlite::base64_enc(serialize(arg, NULL)), fixed = TRUE)
+    if(!exists(key, cache)){
+      assign(key, fun(arg), envir = cache)
+    }
+    get0(key, envir = cache)
+  }
+}
+
+universe_list <- simple_cache(list_universe_packages_internal)
 
 basepkgs <- c("base", "boot", "class", "cluster", "codetools", "compiler",
               "datasets", "foreign", "graphics", "grDevices", "grid", "KernSmooth",
