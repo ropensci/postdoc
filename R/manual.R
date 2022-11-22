@@ -1,0 +1,224 @@
+#' Generate HTML reference manual
+#'
+#' Renders complete package reference manual in HTML format.
+#'
+#' @rdname html_manual
+#' @param package name of the package
+#' @param outdir where to put the html file
+#' @export
+#' @examples htmlfile <- render_package_manual('nnet', tempdir())
+#' utils::browseURL(htmlfile)
+render_package_manual <- function(package, outdir = '.'){
+  dir.create(outdir, recursive = TRUE, showWarnings = FALSE)
+  #Sys.setenv("_R_RD_MACROS_PACKAGE_DIR_" = installdir)
+  manfiles <- load_rd_env(package)
+  desc <- package_desc(package)
+  links <- tools::findHTMLlinks(system.file(package = package, mustWork = TRUE))
+  doc <- xml2::read_html(system.file(package = 'postdoc', 'help-template/manual.html'), options = c("RECOVER", "NOERROR"))
+  body <- xml2::xml_find_first(doc, '//body')
+  xml2::xml_set_attr(body, 'class', 'macintosh')
+  xml2::xml_set_text(xml2::xml_find_first(doc, '//title'), sprintf("Package '%s' reference manual", desc$package))
+  xml2::xml_set_text(xml2::xml_find_first(body, '//h1'), sprintf("Package '%s'", desc$package))
+  lapply(xml2::xml_find_all(doc, "//td[starts-with(@class,'description')]"), function(node){
+    field <- substring(xml2::xml_attr(node, 'class'), 13)
+    if(length(desc[[field]])){
+      xml2::xml_set_text(node, desc[[field]])
+    }
+  })
+  nodes <- lapply(ls(manfiles), function(page_id){
+    render_one_page(page_id, rd = manfiles[[page_id]], package = package, links = links)
+  })
+  mannames <- vapply(nodes, attr, character(1), 'name')
+  nodes <- nodes[order(mannames)]
+  lapply(nodes, xml2::xml_add_child, .x = body)
+  fix_links(doc, package)
+  fix_images(doc, package)
+  prismjs::prism_process_xmldoc(doc)
+  render_math(doc)
+  make_index(doc, nodes)
+  outfile <- file.path(outdir, paste0(package, '.html'))
+  xml2::write_html(doc, outfile)
+  return(outfile)
+}
+
+#TODO: maybe use tools::Rd_db() instead ?
+load_rd_env <- function(package){
+  manfiles <- new.env(parent = emptyenv())
+  installdir <- system.file(package = package, mustWork = TRUE)
+  lazyLoad(file.path(installdir, 'help', package), envir = manfiles)
+  return(manfiles)
+}
+
+render_one_page <- function(page_id, rd, package, links){
+  out <- tempfile(fileext = '.html')
+  page_name <- get_rd_name(rd)
+  html <- tools::Rd2HTML(rd, package = package, out = out, stages=c("build", "install", "render"),
+                         Links = links, stylesheet="", dynamic = FALSE)
+  doc <- xml2::read_html(html)
+  container <- xml2::xml_find_first(doc, "//div[@class = 'container']")
+  xml2::xml_set_attr(container, 'id', page_id)
+  xml2::xml_set_attr(container, 'class', "container manual-page")
+  xml2::xml_remove(xml2::xml_find_first(doc, "//div[a[@href = '00Index.html']]")) # Remove footer
+  headertable <- xml2::xml_find_first(doc, "//table[.//td[text() = 'R Documentation']]")
+  xml2::xml_remove(headertable)
+  titlenode <- xml2::xml_find_first(doc, '//h2')
+  page_title <- xml2::xml_text(titlenode)
+  titlelink <- xml2::xml_replace(titlenode, 'a')
+  xml2::xml_set_attr(titlelink, 'href', paste0("#", page_id))
+  xml2::xml_set_attr(titlelink, 'class', 'help-page-title')
+  xml2::xml_add_child(titlelink, titlenode)
+  structure(container, id = page_id, name = page_name, title = page_title)
+}
+
+fix_images <- function(doc, package){
+  images <- xml2::xml_find_all(doc, "//img[starts-with(@src,'../help/')]")
+  lapply(images, function(x){
+    helpdir <- system.file(package = package, 'help', mustWork = TRUE)
+    img <- file.path(helpdir, xml2::xml_attr(x, 'src'))
+    if(!file.exists(img)){
+      stop("Document references non-existing image: ", xml2::xml_attr(x, 'src'))
+    }
+    # TODO: maybe better just remove these images, because they seem mostly
+    # intended for pkgdown, and don't show up in the PDF manual either...
+    xml2::xml_set_attr(x, 'src', image_base64(img))
+  })
+}
+
+make_index <- function(doc, nodes){
+  index <- xml2::xml_find_first(doc, "//ul[@id='help-index-list']")
+  lapply(nodes, function(x){
+    id <- attr(x, 'id')
+    title <- attr(x, 'title')
+    li <- xml2::xml_add_child(index, 'li')
+    xml2::xml_set_attr(li, 'class', 'help-index-item')
+    a <- xml2::xml_add_child(li, 'a')
+    xml2::xml_set_attr(a, 'href', paste0("#", id))
+    xml2::xml_set_text(a, title)
+  })
+}
+
+image_base64 <- function(path){
+  ext <- tolower(utils::tail(strsplit(path, '.', fixed = TRUE)[[1]], 1))
+  type <- switch(ext,
+                 svg = 'image/svg+xml',
+                 png = 'image/png',
+                 jpeg = 'image/jpeg',
+                 jpg = 'image/jpeg',
+                 stop("Unknown image extension: ", path))
+  content <- readBin(path, raw(), file.info(path)$size)
+  b64 <- gsub('\n', '', jsonlite::base64_enc(content), fixed = TRUE)
+  sprintf('data:%s;base64,%s', type, b64)
+}
+
+# Simulate what happens in R katex-config.js script
+# https://github.com/r-devel/r-svn/blob/HEAD/doc/html/katex-config.js
+render_math <- function(doc){
+  macros = list("\\R"= "\\textsf{R}", "\\mbox"= "\\text", "\\code"= "\\texttt")
+  lapply(xml2::xml_find_all(doc, "//code[@class = 'reqn']"), function(x){
+    input <- trimws(xml2::xml_text(x))
+    output <- katex::katex_html(input, preview = FALSE, macros = macros, displayMode = FALSE, throwOnError = FALSE)
+    newnode <- xml2::read_xml(paste0('<code class="reqn">', trimws(output), '</code>'))
+    xml2::xml_replace(x, xml2::xml_root(newnode))
+  })
+}
+
+package_desc <- function(pkg){
+  desc <- unclass(utils::packageDescription(pkg))
+  names(desc) <- tolower(names(desc))
+  desc$date <- trimws(strsplit(desc$built, ';')[[1]][3])
+  desc$source <- if(length(desc$remoteurl)){
+    desc$remoteurl
+  } else if(length(desc$repository)){
+    desc$repository
+  } else {
+    desc$priority # should be base only
+  }
+  desc
+}
+
+# Try to mimic tools:::.Rd_get_name(rd)
+get_rd_name <- function(rd){
+  nametag <- Filter(function(x){identical("\\name", attr(x, 'Rd_tag'))}, rd)
+  if(length(nametag)){
+    # Should dispatch tools:::as.character.Rd()
+    val <- structure(nametag[[1]], names = 'Rd')
+    paste(as.character(val), collapse = "")
+  } else {
+    stop("Failed to find \\name in Rd")
+  }
+}
+
+fix_links <- function(doc, package){
+  installdir <- system.file(package = package, mustWork = TRUE)
+  aliases <- readRDS(file.path(installdir, "help", "aliases.rds"))
+  links <- xml2::xml_find_all(doc, "//a[starts-with(@href,'../../')]")
+  xml2::xml_set_attr(links, 'href', sub("00Index.html$", './', xml2::xml_attr(links, 'href')))
+  linkvalues <- substring(xml2::xml_attr(links, 'href'), 7)
+  matches <- gregexec("^([^/]+)/(html|help)/([^/]+)\\.html", linkvalues, perl = TRUE)
+  parsedlinks <- regmatches(linkvalues, matches)
+  newlinks <- vapply(parsedlinks, function(x){
+    if(length(x) == 4){
+      linkpkg <- x[2]
+      topic <- utils::URLdecode(gsub("+", "%", x[4], fixed = TRUE))
+      if(linkpkg == package){
+        target <- aliases[topic]
+        if(!is.na(target)){
+          return(paste0("#", target))
+        } else {
+          message("Failed to resolve help alias to: ", linkpkg, "::", topic)
+        }
+      } else if(all(c(linkpkg,package) %in% basepkgs)){
+        # Remove this clause when manuals are published and link to full r-universe URL
+        # This way e.g. Matrix links both correct from its own universe and base-manual
+        return(sprintf('%s.html#%s', linkpkg, topic))
+      } else {
+        pkguniv <- find_package_universe(linkpkg)
+        if(length(pkguniv)){
+          return(sprintf('%s/%s.html#%s', pkguniv, linkpkg, topic))
+        }
+      }
+    }
+    return("#")
+  }, character(1))
+  xml2::xml_set_attr(links, 'href', newlinks)
+
+  # Open external links in a new page
+  xml2::xml_set_attr(xml2::xml_find_all(doc, "//a[starts-with(@href,'http://')]"), 'target', '_blank')
+  xml2::xml_set_attr(xml2::xml_find_all(doc, "//a[starts-with(@href,'https://')]"), 'target', '_blank')
+
+  # Remove dead links produced above
+  xml2::xml_set_attr(xml2::xml_find_all(doc, "//a[@href = '#']"), 'href', NULL)
+}
+
+find_package_url_internal <- function(package){
+  message("Looking up universe for: ", package)
+  url <- sprintf('https://r-universe.dev/stats/powersearch?limit=50&all=true&q=package:%s', package)
+  out <- jsonlite::fromJSON(url)
+  universe <- Sys.getenv("MY_UNIVERSE")
+  if(length(out$results)){
+    sprintf("https://%s.r-universe.dev/%s", out$results[['_user']][1], package)
+  } else if(nchar(universe) && package %in% universe_list(universe)){
+    sprintf('%s/%s', universe, package)
+  } else if(package %in% basepkgs){
+    'https://r-universe.dev/manuals'
+  }
+}
+
+list_universe_packages_internal <- function(universe){
+  message("Listing packages in: ", universe)
+  if(nchar(universe)){
+    jsonlite::fromJSON(sprintf('%s/packages', universe))
+  }
+}
+
+universe_list <- memoise::memoise(list_universe_packages_internal)
+find_package_universe <- memoise::memoise(find_package_url_internal)
+
+
+basepkgs <- c("base", "boot", "class", "cluster", "codetools", "compiler",
+              "datasets", "foreign", "graphics", "grDevices", "grid", "KernSmooth",
+              "lattice", "MASS", "Matrix", "methods", "mgcv", "nlme", "nnet",
+              "parallel", "rpart", "spatial", "splines", "stats",
+              "stats4", "survival", "tcltk", "tools", "utils")
+
+#res = html_manual("~/workspace/V8")
