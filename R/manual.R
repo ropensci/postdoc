@@ -55,8 +55,9 @@ render_package_manual <- function(package, outdir = '.', link_cb = r_universe_li
 r_universe_link <- function(package){
   pkgurl <- find_package_url_internal(package)
   if(length(pkgurl)){
-    message(sprintf("Using link for package '%s' -> %s", package, pkgurl))
-    sprintf('%s/%s.html', pkgurl, package)
+    value <- sprintf('%s/%s.html', pkgurl, package)
+    message(sprintf("Using link for package '%s' -> %s", package, value))
+    value
   } else {
     message(sprintf("Did not find suitable link for package '%s'", package))
   }
