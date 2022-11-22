@@ -2,17 +2,33 @@
 % Please edit documentation in R/manual.R
 \name{render_package_manual}
 \alias{render_package_manual}
+\alias{r_universe_link}
 \title{Generate HTML reference manual}
 \usage{
-render_package_manual(package, outdir = ".")
+render_package_manual(package, outdir = ".", link_cb = r_universe_link)
+
+r_universe_link(package)
 }
 \arguments{
 \item{package}{name of the package}
 
 \item{outdir}{where to put the html file}
+
+\item{link_cb}{callback function which can be used to customize hyperlinks to
+other packages. This function gets invoked when a help file contains links to
+another package, and should return the URL to the html reference manual for
+this other package. Set to \code{NULL} to drop cross-package links.}
+}
+\value{
+path to the generated html document
 }
 \description{
 Renders complete package reference manual in HTML format.
+}
+\details{
+Math rendering and syntax highlighting are done server-side in R such that no
+JavaScript libraries are needed in the browser, which makes the documents
+portable and fast to load.
 }
 \examples{
 htmlfile <- render_package_manual('nnet', tempdir())

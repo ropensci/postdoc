@@ -2,13 +2,22 @@
 #'
 #' Renders complete package reference manual in HTML format.
 #'
+#' Math rendering and syntax highlighting are done server-side in R such that no
+#' JavaScript libraries are needed in the browser, which makes the documents
+#' portable and fast to load.
+#'
 #' @rdname html_manual
 #' @param package name of the package
 #' @param outdir where to put the html file
+#' @param link_cb callback function which can be used to customize hyperlinks to
+#' other packages. This function gets invoked when a help file contains links to
+#' another package, and should return the URL to the html reference manual for
+#' this other package. Set to `NULL` to drop cross-package links.
 #' @export
+#' @return path to the generated html document
 #' @examples htmlfile <- render_package_manual('nnet', tempdir())
 #' utils::browseURL(htmlfile)
-render_package_manual <- function(package, outdir = '.'){
+render_package_manual <- function(package, outdir = '.', link_cb = r_universe_link){
   dir.create(outdir, recursive = TRUE, showWarnings = FALSE)
   #Sys.setenv("_R_RD_MACROS_PACKAGE_DIR_" = installdir)
   manfiles <- load_rd_env(package)
@@ -31,7 +40,7 @@ render_package_manual <- function(package, outdir = '.'){
   mannames <- vapply(nodes, attr, character(1), 'name')
   nodes <- nodes[order(mannames)]
   lapply(nodes, xml2::xml_add_child, .x = body)
-  fix_links(doc, package)
+  fix_links(doc, package, link_cb)
   fix_images(doc, package)
   prismjs::prism_process_xmldoc(doc)
   render_math(doc)
@@ -39,6 +48,15 @@ render_package_manual <- function(package, outdir = '.'){
   outfile <- file.path(outdir, paste0(package, '.html'))
   xml2::write_html(doc, outfile)
   return(outfile)
+}
+
+#' @export
+#' @rdname html_manual
+r_universe_link <- function(package){
+  pkgurl <- find_package_url_internal(package)
+  if(length(pkgurl)){
+    sprintf('%s/%s.html', pkgurl, package)
+  }
 }
 
 #TODO: maybe use tools::Rd_db() instead ?
@@ -148,7 +166,10 @@ get_rd_name <- function(rd){
   }
 }
 
-fix_links <- function(doc, package){
+fix_links <- function(doc, package, link_cb){
+  get_link <- if(is.function(link_cb)){
+    memoise::memoise(link_cb)
+  }
   installdir <- system.file(package = package, mustWork = TRUE)
   aliases <- readRDS(file.path(installdir, "help", "aliases.rds"))
   links <- xml2::xml_find_all(doc, "//a[starts-with(@href,'../../')]")
@@ -165,16 +186,12 @@ fix_links <- function(doc, package){
         if(!is.na(target)){
           return(paste0("#", target))
         } else {
-          message("Failed to resolve help alias to: ", linkpkg, "::", topic)
+          message("Failed to resolve internal help alias to: ", linkpkg, "::", topic)
         }
-      } else if(all(c(linkpkg,package) %in% basepkgs)){
-        # Remove this clause when manuals are published and link to full r-universe URL
-        # This way e.g. Matrix links both correct from its own universe and base-manual
-        return(sprintf('%s.html#%s', linkpkg, topic))
-      } else {
-        pkguniv <- find_package_universe(linkpkg)
-        if(length(pkguniv)){
-          return(sprintf('%s/%s.html#%s', pkguniv, linkpkg, topic))
+      } else if(is.function(get_link)){
+        res <- get_link(linkpkg)
+        if(length(res)){
+          return(sprintf('%s#%s', res, topic))
         }
       }
     }
@@ -197,7 +214,7 @@ find_package_url_internal <- function(package){
   universe <- Sys.getenv("MY_UNIVERSE")
   if(length(out$results)){
     sprintf("https://%s.r-universe.dev/%s", out$results[['_user']][1], package)
-  } else if(nchar(universe) && package %in% universe_list(universe)){
+  } else if(package %in% universe_list(universe)){
     sprintf('%s/%s', universe, package)
   } else if(package %in% basepkgs){
     'https://r-universe.dev/manuals'
@@ -205,15 +222,15 @@ find_package_url_internal <- function(package){
 }
 
 list_universe_packages_internal <- function(universe){
-  message("Listing packages in: ", universe)
-  if(nchar(universe)){
-    jsonlite::fromJSON(sprintf('%s/packages', universe))
+  if(length(universe)){
+    message("Quering packages in: ", universe)
+    if(nchar(universe)){
+      jsonlite::fromJSON(sprintf('%s/packages', universe))
+    }
   }
 }
 
 universe_list <- memoise::memoise(list_universe_packages_internal)
-find_package_universe <- memoise::memoise(find_package_url_internal)
-
 
 basepkgs <- c("base", "boot", "class", "cluster", "codetools", "compiler",
               "datasets", "foreign", "graphics", "grDevices", "grid", "KernSmooth",
@@ -221,4 +238,3 @@ basepkgs <- c("base", "boot", "class", "cluster", "codetools", "compiler",
               "parallel", "rpart", "spatial", "splines", "stats",
               "stats4", "survival", "tcltk", "tools", "utils")
 
-#res = html_manual("~/workspace/V8")
