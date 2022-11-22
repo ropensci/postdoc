@@ -18,10 +18,10 @@
 #' @examples htmlfile <- render_package_manual('nnet', tempdir())
 #' utils::browseURL(htmlfile)
 render_package_manual <- function(package, outdir = '.', link_cb = r_universe_link){
+  desc <- package_desc(package)
   dir.create(outdir, recursive = TRUE, showWarnings = FALSE)
   #Sys.setenv("_R_RD_MACROS_PACKAGE_DIR_" = installdir)
   manfiles <- load_rd_env(package)
-  desc <- package_desc(package)
   links <- tools::findHTMLlinks(system.file(package = package, mustWork = TRUE))
   doc <- xml2::read_html(system.file(package = 'postdoc', 'help-template/manual.html'), options = c("RECOVER", "NOERROR"))
   body <- xml2::xml_find_first(doc, '//body')
@@ -146,6 +146,7 @@ render_math <- function(doc){
 
 package_desc <- function(pkg){
   desc <- unclass(utils::packageDescription(pkg))
+  if(!is.list(desc)) stop("Package not installed: ", pkg, call. = FALSE)
   names(desc) <- tolower(names(desc))
   desc$date <- trimws(strsplit(desc$built, ';')[[1]][3])
   desc$source <- if(length(desc$remoteurl)){
