@@ -222,7 +222,7 @@ find_package_url_internal <- function(package){
 }
 
 list_universe_packages_internal <- function(universe){
-  if(length(universe)){
+  if(length(universe) && nchar(universe)){
     message("Quering packages in: ", universe)
     if(nchar(universe)){
       jsonlite::fromJSON(sprintf('%s/packages', universe))
