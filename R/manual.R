@@ -62,7 +62,7 @@ render_package_manual_one <- function(package, outdir = '.', get_link){
 #' @rdname html_manual
 #' @export
 render_base_manuals <- function(outdir = '.'){
-  render_package_manual(basepkgs)
+  render_package_manual(basepkgs, outdir = outdir)
 }
 
 #' @export
