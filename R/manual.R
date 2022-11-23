@@ -55,7 +55,7 @@ render_package_manual <- function(package, outdir = '.', link_cb = r_universe_li
 render_base_manuals <- function(outdir = '.'){
   # cache links between all docs
   link_cache <- simple_cache(r_universe_link)
-  lapply(basepkgs, render_package_manual, outdir = outdir, link_cb = link_cache)
+  sapply(basepkgs, render_package_manual, outdir = outdir, link_cb = link_cache)
 }
 
 #' @export
