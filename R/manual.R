@@ -219,7 +219,7 @@ fix_links <- function(doc, package, link_cb){
   badlinks <- grep('^(http|mailto|#)', doclinks, invert = TRUE, value = TRUE)
   if(length(badlinks)){
     message("Found unresolved local links:")
-    print(badlinks)
+    lapply(badlinks, message)
   }
 }
 
