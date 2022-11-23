@@ -34,12 +34,14 @@ render_package_manual <- function(package, outdir = '.', link_cb = r_universe_li
       xml2::xml_set_text(node, desc[[field]])
     }
   })
+  write_footer(doc)
   nodes <- lapply(ls(manfiles), function(page_id){
     render_one_page(page_id, rd = manfiles[[page_id]], package = package, links = links)
   })
   mannames <- vapply(nodes, attr, character(1), 'name')
   nodes <- nodes[order(mannames)]
-  lapply(nodes, xml2::xml_add_child, .x = body)
+  pagediv <- xml2::xml_find_first(doc, "//div[@class='manual-pages-content']")
+  lapply(nodes, xml2::xml_add_child, .x = pagediv)
   fix_links(doc, package, link_cb)
   fix_images(doc, package)
   prismjs::prism_process_xmldoc(doc)
@@ -230,6 +232,12 @@ fix_links <- function(doc, package, link_cb){
     message("Found unresolved local links:")
     lapply(badlinks, message)
   }
+}
+
+write_footer <- function(doc){
+  footer <- xml2::xml_find_first(doc, '//footer')
+  p <- xml2::xml_add_child(footer, 'p')
+  xml2::xml_set_text(p, sprintf('Rendered with postdoc %s', utils::packageVersion('postdoc')))
 }
 
 find_package_url_internal <- function(package){
