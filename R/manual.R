@@ -50,6 +50,12 @@ render_package_manual <- function(package, outdir = '.', link_cb = r_universe_li
   return(outfile)
 }
 
+#' @rdname html_manual
+#' @export
+render_base_manuals <- function(outdir = '.'){
+  lapply(basepkgs, render_package_manual, outdir = outdir)
+}
+
 #' @export
 #' @rdname html_manual
 r_universe_link <- function(package){
