@@ -181,16 +181,21 @@ fix_links <- function(doc, package, link_cb){
   get_link <- if(is.function(link_cb)){
     simple_cache(link_cb)
   }
-  installdir <- system.file(package = package, mustWork = TRUE)
-  aliases <- readRDS(file.path(installdir, "help", "aliases.rds"))
+  # Open true external links in a new page
+  xml2::xml_set_attr(xml2::xml_find_all(doc, "//a[starts-with(@href,'http://')]"), 'target', '_blank')
+  xml2::xml_set_attr(xml2::xml_find_all(doc, "//a[starts-with(@href,'https://')]"), 'target', '_blank')
+
   # Normalize local hyperlinks
   locallinks <- xml2::xml_find_all(doc, "//a[starts-with(@href,'../help/')]")
   xml2::xml_set_attr(locallinks, 'href', sub("^../", sprintf("../../%s/", package), xml2::xml_attr(locallinks, 'href')))
+
+  # Find and replace x-package links
   links <- xml2::xml_find_all(doc, "//a[starts-with(@href,'../../')]")
   xml2::xml_set_attr(links, 'href', sub("00Index.html$", './', xml2::xml_attr(links, 'href')))
   linkvalues <- substring(xml2::xml_attr(links, 'href'), 7)
   matches <- gregexec("^([^/]+)/(html|help)/([^/]+)\\.html", linkvalues, perl = TRUE)
   parsedlinks <- regmatches(linkvalues, matches)
+  aliases <- readRDS(system.file("help", "aliases.rds", package = package, mustWork = TRUE))
   newlinks <- vapply(parsedlinks, function(x){
     if(length(x) == 4){
       linkpkg <- x[2]
@@ -212,10 +217,6 @@ fix_links <- function(doc, package, link_cb){
     return("#")
   }, character(1))
   xml2::xml_set_attr(links, 'href', newlinks)
-
-  # Open external links in a new page
-  xml2::xml_set_attr(xml2::xml_find_all(doc, "//a[starts-with(@href,'http://')]"), 'target', '_blank')
-  xml2::xml_set_attr(xml2::xml_find_all(doc, "//a[starts-with(@href,'https://')]"), 'target', '_blank')
 
   # Remove dead links produced above
   xml2::xml_set_attr(xml2::xml_find_all(doc, "//a[@href = '#']"), 'href', NULL)
