@@ -18,11 +18,17 @@
 #' @examples htmlfile <- render_package_manual('parallel', tempdir())
 #' utils::browseURL(htmlfile)
 render_package_manual <- function(package, outdir = '.', link_cb = r_universe_link){
-  desc <- package_desc(package)
   dir.create(outdir, recursive = TRUE, showWarnings = FALSE)
+  get_link <- if(is.function(link_cb)){
+    simple_cache(link_cb)
+  }
+  sapply(package, render_package_manual_one, outdir = outdir, get_link = get_link)
+}
+
+render_package_manual_one <- function(package, outdir = '.', get_link){
+  desc <- package_desc(package)
   #Sys.setenv("_R_RD_MACROS_PACKAGE_DIR_" = installdir)
   manfiles <- load_rd_env(package)
-  links <- tools::findHTMLlinks(system.file(package = package, mustWork = TRUE))
   doc <- xml2::read_html(system.file(package = 'postdoc', 'help-template/manual.html'), options = c("RECOVER", "NOERROR"))
   body <- xml2::xml_find_first(doc, '//body')
   xml2::xml_set_attr(body, 'class', 'macintosh')
@@ -35,14 +41,15 @@ render_package_manual <- function(package, outdir = '.', link_cb = r_universe_li
     }
   })
   write_footer(doc)
+  rlinkdb <- tools::findHTMLlinks(system.file(package = package)) # can be expensive if many pkgs installed
   nodes <- lapply(ls(manfiles), function(page_id){
-    render_one_page(page_id, rd = manfiles[[page_id]], package = package, links = links)
+    render_one_page(page_id, rd = manfiles[[page_id]], package = package, links = rlinkdb)
   })
   mannames <- vapply(nodes, attr, character(1), 'name')
   nodes <- nodes[order(mannames)]
   pagediv <- xml2::xml_find_first(doc, "//div[@class='manual-pages-content']")
   lapply(nodes, xml2::xml_add_child, .x = pagediv)
-  fix_links(doc, package, link_cb)
+  fix_links(doc, package, get_link)
   fix_images(doc, package)
   prismjs::prism_process_xmldoc(doc)
   render_math(doc)
@@ -55,9 +62,7 @@ render_package_manual <- function(package, outdir = '.', link_cb = r_universe_li
 #' @rdname html_manual
 #' @export
 render_base_manuals <- function(outdir = '.'){
-  # cache links between all docs
-  link_cache <- simple_cache(r_universe_link)
-  sapply(basepkgs, render_package_manual, outdir = outdir, link_cb = link_cache)
+  render_package_manual(basepkgs)
 }
 
 #' @export
@@ -181,10 +186,7 @@ get_rd_name <- function(rd){
   }
 }
 
-fix_links <- function(doc, package, link_cb){
-  get_link <- if(is.function(link_cb)){
-    simple_cache(link_cb)
-  }
+fix_links <- function(doc, package, get_link){
   # Open true external links in a new page
   xml2::xml_set_attr(xml2::xml_find_all(doc, "//a[starts-with(@href,'http://')]"), 'target', '_blank')
   xml2::xml_set_attr(xml2::xml_find_all(doc, "//a[starts-with(@href,'https://')]"), 'target', '_blank')
