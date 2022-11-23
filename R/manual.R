@@ -177,6 +177,9 @@ fix_links <- function(doc, package, link_cb){
   }
   installdir <- system.file(package = package, mustWork = TRUE)
   aliases <- readRDS(file.path(installdir, "help", "aliases.rds"))
+  # Normalize local hyperlinks
+  locallinks <- xml2::xml_find_all(doc, "//a[starts-with(@href,'../help/')]")
+  xml2::xml_set_attr(locallinks, 'href', sub("^../", sprintf("../../%s/", package), xml2::xml_attr(locallinks, 'href')))
   links <- xml2::xml_find_all(doc, "//a[starts-with(@href,'../../')]")
   xml2::xml_set_attr(links, 'href', sub("00Index.html$", './', xml2::xml_attr(links, 'href')))
   linkvalues <- substring(xml2::xml_attr(links, 'href'), 7)
@@ -210,6 +213,14 @@ fix_links <- function(doc, package, link_cb){
 
   # Remove dead links produced above
   xml2::xml_set_attr(xml2::xml_find_all(doc, "//a[@href = '#']"), 'href', NULL)
+
+  # Check remaining links
+  doclinks <- xml2::xml_attr(xml2::xml_find_all(doc, "//a[@href]"), 'href')
+  badlinks <- grep('^(http|mailto|#)', doclinks, invert = TRUE, value = TRUE)
+  if(length(badlinks)){
+    message("Found unresolved local links:")
+    print(badlinks)
+  }
 }
 
 find_package_url_internal <- function(package){
