@@ -35,5 +35,5 @@ portable and fast to load.
 }
 \examples{
 htmlfile <- render_package_manual('parallel', tempdir())
-utils::browseURL(htmlfile)
+if(interactive()) utils::browseURL(htmlfile)
 }

@@ -16,7 +16,7 @@
 #' @export
 #' @return path to the generated html document
 #' @examples htmlfile <- render_package_manual('parallel', tempdir())
-#' utils::browseURL(htmlfile)
+#' if(interactive()) utils::browseURL(htmlfile)
 render_package_manual <- function(package, outdir = '.', link_cb = r_universe_link){
   dir.create(outdir, recursive = TRUE, showWarnings = FALSE)
   get_link <- if(is.function(link_cb)){
