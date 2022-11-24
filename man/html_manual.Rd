@@ -35,7 +35,7 @@ portable and fast to load.
 }
 \examples{
 \dontrun{
-htmlfile <- render_package_manual('class', tempdir())
+htmlfile <- render_package_manual('parallel', tempdir())
 if(interactive()) utils::browseURL(htmlfile)
 }
 }

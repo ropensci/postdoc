@@ -16,7 +16,7 @@
 #' @export
 #' @return path to the generated html document
 #' @examples \dontrun{
-#' htmlfile <- render_package_manual('class', tempdir())
+#' htmlfile <- render_package_manual('parallel', tempdir())
 #' if(interactive()) utils::browseURL(htmlfile)
 #' }
 render_package_manual <- function(package, outdir = '.', link_cb = r_universe_link){
