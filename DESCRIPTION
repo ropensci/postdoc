@@ -1,13 +1,13 @@
 Package: postdoc
 Type: Package
-Title: Simple and Uncluttered Package Documentation
+Title: Minimal and Uncluttered Package Documentation
 Version: 1.0.0
 Authors@R: person("Jeroen", "Ooms", role = c("aut", "cre"), email = "jeroen@berkeley.edu",
     comment = c(ORCID = "0000-0002-4035-0289"))
-Description: Generates simple and uncluttered one-page HTML reference manuals 
+Description: Generates simple and beautiful one-page HTML reference manuals 
     with package documentation. Math rendering and syntax highlighting are done 
     server-side in 'R' such that no 'JavaScript' libraries are needed in the
-    browser, which makes the documents portable and fast to load.
+    browser, which makes the documentation portable and fast to load.
 License: MIT + file LICENSE
 URL: https://github.com/ropensci/postdoc, https://docs.ropensci.org/postdoc/
 BugReports: https://github.com/ropensci/postdoc/issues
