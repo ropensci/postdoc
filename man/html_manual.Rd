@@ -34,6 +34,6 @@ JavaScript libraries are needed in the browser, which makes the documents
 portable and fast to load.
 }
 \examples{
-htmlfile <- render_package_manual('parallel', tempdir())
+htmlfile <- render_package_manual('class', tempdir())
 if(interactive()) utils::browseURL(htmlfile)
 }
