@@ -6,9 +6,9 @@
 \alias{r_universe_link}
 \title{Generate HTML reference manual}
 \usage{
-render_package_manual(package, outdir = ".", link_cb = r_universe_link)
+render_package_manual(package, outdir, link_cb = r_universe_link)
 
-render_base_manuals(outdir = ".")
+render_base_manuals(outdir)
 
 r_universe_link(package)
 }
@@ -34,8 +34,6 @@ JavaScript libraries are needed in the browser, which makes the documents
 portable and fast to load.
 }
 \examples{
-\dontrun{
-htmlfile <- render_package_manual('parallel', tempdir())
+htmlfile <- render_package_manual('compiler', tempdir())
 if(interactive()) utils::browseURL(htmlfile)
-}
 }

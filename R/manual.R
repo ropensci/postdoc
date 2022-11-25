@@ -15,11 +15,10 @@
 #' this other package. Set to `NULL` to drop cross-package links.
 #' @export
 #' @return path to the generated html document
-#' @examples \dontrun{
-#' htmlfile <- render_package_manual('parallel', tempdir())
+#' @examples
+#' htmlfile <- render_package_manual('compiler', tempdir())
 #' if(interactive()) utils::browseURL(htmlfile)
-#' }
-render_package_manual <- function(package, outdir = '.', link_cb = r_universe_link){
+render_package_manual <- function(package, outdir, link_cb = r_universe_link){
   dir.create(outdir, recursive = TRUE, showWarnings = FALSE)
   get_link <- if(is.function(link_cb)){
     simple_cache(link_cb)
@@ -27,7 +26,7 @@ render_package_manual <- function(package, outdir = '.', link_cb = r_universe_li
   sapply(package, render_package_manual_one, outdir = outdir, get_link = get_link)
 }
 
-render_package_manual_one <- function(package, outdir = '.', get_link){
+render_package_manual_one <- function(package, outdir, get_link){
   desc <- package_desc(package)
   #Sys.setenv("_R_RD_MACROS_PACKAGE_DIR_" = installdir)
   manfiles <- load_rd_env(package)
@@ -63,7 +62,7 @@ render_package_manual_one <- function(package, outdir = '.', get_link){
 
 #' @rdname html_manual
 #' @export
-render_base_manuals <- function(outdir = '.'){
+render_base_manuals <- function(outdir){
   render_package_manual(basepkgs, outdir = outdir)
 }
 
