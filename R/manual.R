@@ -249,7 +249,7 @@ find_package_url_internal <- function(package){
   out <- jsonlite::fromJSON(url)
   my_universe <- Sys.getenv("MY_UNIVERSE")
   link <- if(length(out$results)){
-    sprintf("https://%s.r-universe.dev/%s", out$results[['_user']][1], package)
+    sprintf("https://%s.r-universe.dev/manual", out$results[['_user']][1])
   } else if(package %in% universe_list(my_universe)){
     sprintf('%s/%s', my_universe, package)
   } else if(package %in% basepkgs){
