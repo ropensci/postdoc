@@ -114,11 +114,12 @@ fix_images <- function(doc, package){
     helpdir <- system.file(package = package, 'help', mustWork = TRUE)
     img <- file.path(helpdir, xml2::xml_attr(x, 'src'))
     if(!file.exists(img)){
-      stop("Document references non-existing image: ", xml2::xml_attr(x, 'src'))
+      warning("Document references non-existing image: ", xml2::xml_attr(x, 'src'))
+    } else {
+      # TODO: maybe better just remove these images, because they seem mostly
+      # intended for pkgdown, and don't show up in the PDF manual either...
+      xml2::xml_set_attr(x, 'src', image_base64(img))
     }
-    # TODO: maybe better just remove these images, because they seem mostly
-    # intended for pkgdown, and don't show up in the PDF manual either...
-    xml2::xml_set_attr(x, 'src', image_base64(img))
   })
 }
 
