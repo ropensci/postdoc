@@ -37,7 +37,9 @@ render_package_manual_one <- function(package, outdir, get_link){
   xml2::xml_set_text(xml2::xml_find_first(body, '//h1'), sprintf("Package '%s'", desc$package))
   lapply(xml2::xml_find_all(doc, "//td[starts-with(@class,'description')]"), function(node){
     field <- substring(xml2::xml_attr(node, 'class'), 13)
-    if(length(desc[[field]])){
+    if(field == 'author'){
+      xml2::xml_add_child(node, make_author_node(desc[[field]]))
+    } else if(length(desc[[field]])){
       xml2::xml_set_text(node, desc[[field]])
     }
   })
@@ -174,6 +176,20 @@ package_desc <- function(pkg){
     desc$priority # should be base only
   }
   desc
+}
+
+escape_txt <- function(txt){
+  doc <- xml2::read_xml(charToRaw("<span></span>"))
+  node <- xml2::xml_root(doc)
+  xml2::xml_set_text(node, txt)
+  as.character(xml2::xml_contents(node))
+}
+
+make_author_node <- function(author){
+  snippet <- gsub("\\(&lt;(https://orcid.org/[0-9X-]{19})&gt;\\)",
+                      '<a href="\\1"><img style="height:1em" src="https://cran.r-project.org/web/orcid.svg"></img></a>',
+                      escape_txt(author), perl=TRUE)
+  xml2::xml_root(xml2::read_xml(sprintf('<span>%s</span>', snippet)))
 }
 
 # Try to mimic tools:::.Rd_get_name(rd)
