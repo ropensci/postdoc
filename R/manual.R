@@ -93,7 +93,7 @@ render_one_page <- function(page_id, rd, package, links){
   out <- tempfile(fileext = '.html')
   page_name <- get_rd_name(rd)
   html <- tools::Rd2HTML(rd, package = package, out = out, stages=c("build", "install", "render"),
-                         Links = links, stylesheet="", dynamic = FALSE)
+                         Links = links, Links2 = links, stylesheet="", dynamic = FALSE)
   doc <- xml2::read_html(html)
   container <- xml2::xml_find_first(doc, "//div[@class = 'container']")
   xml2::xml_set_attr(container, 'id', page_id)
