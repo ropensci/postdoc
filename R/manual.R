@@ -189,7 +189,7 @@ make_author_node <- function(author){
   snippet <- gsub("\\(&lt;(https://orcid.org/[0-9X-]{19})&gt;\\)",
                       '<a href="\\1"><img style="height:1em" src="https://cran.r-project.org/web/orcid.svg"></img></a>',
                       escape_txt(author), perl=TRUE)
-  xml2::xml_root(xml2::read_html(sprintf('<span>%s</span>', snippet)))
+  xml2::xml_root(xml2::read_xml(sprintf('<span>%s</span>', snippet), options = c("RECOVER", "NOERROR", "NOBLANKS")))
 }
 
 # Try to mimic tools:::.Rd_get_name(rd)
