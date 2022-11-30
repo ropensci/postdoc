@@ -158,8 +158,8 @@ render_math <- function(doc){
   lapply(xml2::xml_find_all(doc, "//code[@class = 'reqn']"), function(x){
     input <- trimws(xml2::xml_text(x))
     output <- katex::katex_html(input, preview = FALSE, macros = macros, displayMode = FALSE, throwOnError = FALSE)
-    newnode <- xml2::read_xml(paste0('<code class="reqn">', trimws(output), '</code>'))
-    xml2::xml_replace(x, xml2::xml_root(newnode))
+    newnode <- parse_html_node(paste0('<code class="reqn">', trimws(output), '</code>'))
+    xml2::xml_replace(x, newnode)
   })
 }
 
@@ -189,7 +189,7 @@ make_author_node <- function(author){
   snippet <- gsub("\\(&lt;(https://orcid.org/[0-9X-]{19})&gt;\\)",
                       '<a href="\\1"><img style="height:1em" src="https://cran.r-project.org/web/orcid.svg"></img></a>',
                       escape_txt(author), perl=TRUE)
-  xml2::xml_root(xml2::read_xml(sprintf('<span>%s</span>', snippet), options = c("RECOVER", "NOERROR", "NOBLANKS")))
+  parse_html_node(sprintf('<span>%s</span>', snippet))
 }
 
 # Try to mimic tools:::.Rd_get_name(rd)
@@ -301,3 +301,6 @@ basepkgs <- c("base", "boot", "class", "cluster", "codetools", "compiler",
               "parallel", "rpart", "spatial", "splines", "stats",
               "stats4", "survival", "tcltk", "tools", "utils")
 
+parse_html_node <- function(html){
+  xml2::xml_child(xml2::xml_child(xml2::read_html(html)))
+}
