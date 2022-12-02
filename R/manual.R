@@ -86,7 +86,10 @@ load_rd_env <- function(package){
   manfiles <- new.env(parent = emptyenv())
   installdir <- system.file(package = package, mustWork = TRUE)
   lazyLoad(file.path(installdir, 'help', package), envir = manfiles)
-  return(manfiles)
+  # cf https://github.com/wch/r-source/blob/b12ffba7584825d6b11bba8b7dbad084a74c1c20/src/library/tools/R/Rd2pdf.R#L109
+  Filter(function(x){
+    is.na(match("internal", tools:::.Rd_get_metadata(x, 'keyword')))
+  }, as.list(manfiles))
 }
 
 render_one_page <- function(page_id, rd, package, links){
