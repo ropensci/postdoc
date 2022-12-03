@@ -2,6 +2,7 @@
   - Do not include 'internal' pages in the manual
   - Parse orcid links in author fields
   - Warn (instead of error) for broken topic links
+  - Move help pages with name '*-package' to the top
 
 1.0.0
   - Initial release

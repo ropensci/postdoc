@@ -48,8 +48,7 @@ render_package_manual_one <- function(package, outdir, get_link){
   nodes <- lapply(ls(manfiles), function(page_id){
     render_one_page(page_id, rd = manfiles[[page_id]], package = package, links = rlinkdb)
   })
-  mannames <- vapply(nodes, attr, character(1), 'name')
-  nodes <- nodes[order(mannames)]
+  nodes <- sort_chapters(nodes)
   pagediv <- xml2::xml_find_first(doc, "//div[@class='manual-pages-content']")
   lapply(nodes, xml2::xml_add_child, .x = pagediv)
   fix_links(doc, package, get_link)
@@ -90,6 +89,12 @@ load_rd_env <- function(package){
   Filter(function(x){
     is.na(match("internal", get_rd_keywords(x)))
   }, as.list(manfiles))
+}
+
+sort_chapters <- function(nodes){
+  mannames <- vapply(nodes, attr, character(1), 'name')
+  sortnames <- sub("^(.*-package)$", '___\\1', mannames)
+  nodes[order(sortnames)]
 }
 
 render_one_page <- function(page_id, rd, package, links){
