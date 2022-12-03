@@ -88,7 +88,7 @@ load_rd_env <- function(package){
   lazyLoad(file.path(installdir, 'help', package), envir = manfiles)
   # cf https://github.com/wch/r-source/blob/b12ffba7584825d6b11bba8b7dbad084a74c1c20/src/library/tools/R/Rd2pdf.R#L109
   Filter(function(x){
-    is.na(match("internal", tools:::.Rd_get_metadata(x, 'keyword')))
+    is.na(match("internal", get_rd_keywords(x)))
   }, as.list(manfiles))
 }
 
@@ -205,6 +205,12 @@ get_rd_name <- function(rd){
   } else {
     stop("Failed to find \\name in Rd")
   }
+}
+
+get_rd_keywords <- function(rd){
+  # Mimic: tools:::.Rd_get_metadata
+  keywords <- Filter(function(x){identical("\\keyword", attr(x, 'Rd_tag'))}, rd)
+  unique(trimws(vapply(keywords, paste, "", collapse = "\n")))
 }
 
 fix_links <- function(doc, package, get_link){
