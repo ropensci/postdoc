@@ -6,7 +6,7 @@ Authors@R: person("Jeroen", "Ooms", role = c("aut", "cre"), email = "jeroen@berk
     comment = c(ORCID = "0000-0002-4035-0289"))
 Description: Generates simple and beautiful one-page HTML reference manuals 
     with package documentation. Math rendering and syntax highlighting are done 
-    server-side in 'R' such that no 'JavaScript' libraries are needed in the
+    server-side in R such that no JavaScript libraries are needed in the
     browser, which makes the documentation portable and fast to load.
 License: MIT + file LICENSE
 URL: https://github.com/ropensci/postdoc, https://docs.ropensci.org/postdoc/
