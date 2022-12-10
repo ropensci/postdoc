@@ -1,7 +1,7 @@
 Package: postdoc
 Type: Package
 Title: Minimal and Uncluttered Package Documentation
-Version: 1.1.0
+Version: 1.1.1
 Authors@R: person("Jeroen", "Ooms", role = c("aut", "cre"), email = "jeroen@berkeley.edu",
     comment = c(ORCID = "0000-0002-4035-0289"))
 Description: Generates simple and beautiful one-page HTML reference manuals 
