@@ -37,7 +37,7 @@ render_package_manual_one <- function(package, outdir, get_link){
   xml2::xml_set_text(xml2::xml_find_first(body, '//h1'), sprintf("Package '%s'", desc$package))
   lapply(xml2::xml_find_all(doc, "//td[starts-with(@class,'description')]"), function(node){
     field <- substring(xml2::xml_attr(node, 'class'), 13)
-    if(field == 'author'){
+    if(field == 'author' && nchar(desc$author)){
       xml2::xml_add_child(node, make_author_node(desc[[field]]))
     } else if(length(desc[[field]])){
       xml2::xml_set_text(node, desc[[field]])
