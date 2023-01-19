@@ -70,7 +70,7 @@ render_base_manuals <- function(outdir){
 #' @export
 #' @rdname html_manual
 r_universe_link <- function(package){
-  pkgurl <- find_package_url_internal(package)
+  pkgurl <- tryCatch(find_package_url_internal(package), error = message)
   if(length(pkgurl)){
     value <- sprintf('%s/%s.html', pkgurl, package)
     message(sprintf("Using link for package '%s' -> %s", package, value))
