@@ -18,7 +18,7 @@
 #' @examples
 #' htmlfile <- render_package_manual('compiler', tempdir())
 #' if(interactive()) utils::browseURL(htmlfile)
-render_package_manual <- function(package, outdir, link_cb = r_universe_link){
+render_package_manual <- function(package, outdir = '.', link_cb = r_universe_link){
   dir.create(outdir, recursive = TRUE, showWarnings = FALSE)
   get_link <- if(is.function(link_cb)){
     simple_cache(link_cb)
@@ -63,7 +63,7 @@ render_package_manual_one <- function(package, outdir, get_link){
 
 #' @rdname html_manual
 #' @export
-render_base_manuals <- function(outdir){
+render_base_manuals <- function(outdir = '.'){
   render_package_manual(basepkgs, outdir = outdir)
 }
 

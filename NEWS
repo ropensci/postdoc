@@ -1,3 +1,6 @@
+1.2.0
+  - Small fixes for weird edge cases
+
 1.1.0
   - Do not include 'internal' pages in the manual
   - Parse orcid links in author fields
