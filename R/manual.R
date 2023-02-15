@@ -70,9 +70,12 @@ render_base_manuals <- function(outdir = '.'){
 #' @export
 #' @rdname html_manual
 r_universe_link <- function(package){
-  pkgurl <- tryCatch(find_package_url_internal(package), error = message)
-  if(length(pkgurl)){
-    value <- sprintf('%s/%s.html', pkgurl, package)
+  if(package %in% basepkgs){
+    return(sprintf('https://r-universe.dev/manuals/%s.html', package))
+  }
+  universe <- tryCatch(find_package_universe(package), error = message)
+  if(length(universe)){
+    value <- sprintf('%s/%s/doc/manual.html', universe, package)
     message(sprintf("Using link for package '%s' -> %s", package, value))
     value
   } else {
@@ -274,16 +277,14 @@ write_footer <- function(doc){
   xml2::xml_set_text(p, sprintf('Rendered with postdoc %s', utils::packageVersion('postdoc')))
 }
 
-find_package_url_internal <- function(package){
+find_package_universe <- function(package){
   url <- sprintf('https://r-universe.dev/stats/powersearch?limit=50&all=true&q=package:%s', package)
   out <- jsonlite::fromJSON(url)
   my_universe <- Sys.getenv("MY_UNIVERSE")
-  link <- if(length(out$results)){
-    sprintf("https://%s.r-universe.dev/manual", out$results[['_user']][1])
+  if(length(out$results)){
+    sprintf("https://%s.r-universe.dev", out$results[['_user']][1])
   } else if(package %in% universe_list(my_universe)){
-    sprintf('%s/%s', my_universe, package)
-  } else if(package %in% basepkgs){
-    'https://r-universe.dev/manuals'
+    my_universe
   }
 }
 
