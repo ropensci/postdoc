@@ -1,3 +1,6 @@
+1.2.2
+  - Use https://api.cran.dev for faster link lookups
+
 1.2.0
   - Small fixes for weird edge cases
 
