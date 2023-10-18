@@ -73,11 +73,10 @@ r_universe_link <- function(package){
   if(package %in% basepkgs){
     return(sprintf('https://r-universe.dev/manuals/%s.html', package))
   }
-  universe <- tryCatch(find_package_universe(package), error = message)
-  if(length(universe)){
-    value <- sprintf('%s/%s/doc/manual.html', universe, package)
-    message(sprintf("Using link for package '%s' -> %s", package, value))
-    value
+  link <- tryCatch(lookup_docs_link(package), error = message)
+  if(length(link)){
+    message(sprintf("Using link for package '%s' -> %s", package, link))
+    link
   } else {
     message(sprintf("Did not find suitable link for package '%s'", package))
   }
@@ -277,14 +276,21 @@ write_footer <- function(doc){
   xml2::xml_set_text(p, sprintf('Rendered with postdoc %s', utils::packageVersion('postdoc')))
 }
 
-find_package_universe <- function(package){
-  url <- sprintf('https://r-universe.dev/stats/powersearch?limit=50&all=true&q=package:%s', package)
-  out <- jsonlite::fromJSON(url)
+lookup_docs_link <- function(package){
+  res <- curl::curl_fetch_memory(sprintf('https://api.cran.dev/%s', package))
+  if(res$status_code == 200){
+    out <- jsonlite::fromJSON(rawToChar(res$content))
+    if(length(out$devel$docs)){
+      return(out$devel$docs)
+    }
+    if(length(out$release$docs)){
+      return(out$release$docs)
+    }
+    stop('Unexpected response from cran.dev for: ', package)
+  }
   my_universe <- Sys.getenv("MY_UNIVERSE")
-  if(length(out$results)){
-    sprintf("https://%s.r-universe.dev", out$results[['_user']][1])
-  } else if(package %in% universe_list(my_universe)){
-    my_universe
+  if(package %in% universe_list(my_universe)){
+    sprintf("%s/%s/doc/manual.html", my_universe, package)
   }
 }
 
@@ -292,7 +298,7 @@ list_universe_packages_internal <- function(universe){
   if(length(universe) && nchar(universe)){
     message("Quering packages in: ", universe)
     if(nchar(universe)){
-      jsonlite::fromJSON(sprintf('%s/packages', universe))
+      jsonlite::fromJSON(sprintf('%s/api/ls', universe))
     }
   }
 }
