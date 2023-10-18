@@ -14,6 +14,7 @@ URL: https://ropensci.r-universe.dev/postdoc
 BugReports: https://github.com/ropensci/postdoc/issues
 Encoding: UTF-8
 Imports: 
+    curl,
     jsonlite,
     katex,
     prismjs,
