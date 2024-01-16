@@ -32,7 +32,7 @@ render_package_manual_one <- function(package, outdir, get_link){
   manfiles <- load_rd_env(package)
   doc <- xml2::read_html(system.file(package = 'postdoc', 'help-template/manual.html'), options = c("RECOVER", "NOERROR"))
   body <- xml2::xml_find_first(doc, '//body')
-  xml2::xml_set_attr(body, 'class', 'macintosh')
+  xml2::xml_set_attr(body, 'class', 'postdoc macintosh')
   xml2::xml_set_text(xml2::xml_find_first(doc, '//title'), sprintf("Package '%s' reference manual", desc$package))
   xml2::xml_set_text(xml2::xml_find_first(body, '//h1'), sprintf("Package '%s'", desc$package))
   lapply(xml2::xml_find_all(doc, "//td[starts-with(@class,'description')]"), function(node){
