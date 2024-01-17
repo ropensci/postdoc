@@ -117,6 +117,7 @@ render_one_page <- function(page_id, rd, package, links){
   xml2::xml_set_attr(titlelink, 'href', paste0("#", page_id))
   xml2::xml_set_attr(titlelink, 'class', 'help-page-title')
   xml2::xml_add_child(titlelink, titlenode)
+  xml2::xml_set_attr(xml2::xml_find_first(doc, "//h3[text() = 'Arguments']"), 'class', 'r-arguments-title')
   structure(container, id = page_id, name = page_name, title = page_title)
 }
 
