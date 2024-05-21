@@ -106,6 +106,11 @@ render_one_page <- function(page_id, rd, package, links){
                          Links = links, Links2 = character(), stylesheet="", dynamic = FALSE)
   doc <- xml2::read_html(html)
   container <- xml2::xml_find_first(doc, "//div[@class = 'container']")
+  main <- xml2::xml_find_first(doc, "//main")
+  if(xml2::xml_length(main)){
+    xml2::xml_name(main) <- "div"
+    xml2::xml_set_attr(main, 'class', 'page-main')
+  }
   xml2::xml_set_attr(container, 'id', page_id)
   xml2::xml_set_attr(container, 'class', "container manual-page")
   xml2::xml_remove(xml2::xml_find_first(doc, "//div[a[@href = '00Index.html']]")) # Remove footer
