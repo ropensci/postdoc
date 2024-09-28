@@ -16,9 +16,11 @@ Encoding: UTF-8
 Imports: 
     curl,
     jsonlite,
-    katex,
+    katex (>= 1.5.0),
     prismjs,
     xml2
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.2.9000
 Roxygen: list(markdown = TRUE)
 Language: en-US
+Remotes: ropensci/katex
+
