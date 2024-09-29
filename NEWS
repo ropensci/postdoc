@@ -1,5 +1,6 @@
 1.4.0
   - Use CDN for katex.min.css because it also needs font files
+  - Use latest katex
 
 1.3.0
   - Remove <main> tags from each page
