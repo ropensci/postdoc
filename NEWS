@@ -1,3 +1,6 @@
+1.4.1
+  - Give a warning instead of an error for unsupported image types
+
 1.4.0
   - Use CDN for katex.min.css because it also needs font files
   - Use latest katex

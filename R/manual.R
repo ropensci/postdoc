@@ -136,7 +136,10 @@ fix_images <- function(doc, package){
     } else {
       # TODO: maybe better just remove these images, because they seem mostly
       # intended for pkgdown, and don't show up in the PDF manual either...
-      xml2::xml_set_attr(x, 'src', image_base64(img))
+      tryCatch(xml2::xml_set_attr(x, 'src', image_base64(img)), error = function(e){
+        warning(e)
+        xml2::xml_remove(x)
+      })
     }
   })
 }
