@@ -1,3 +1,6 @@
+1.4.2
+  - Small fix for looking up cross links
+
 1.4.1
   - Give a warning instead of an error for unsupported image types
 
