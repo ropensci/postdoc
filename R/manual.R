@@ -286,16 +286,10 @@ write_footer <- function(doc){
 }
 
 lookup_docs_link <- function(package){
-  res <- curl::curl_fetch_memory(sprintf('https://api.cran.dev/%s', package))
+  res <- curl::curl_fetch_memory(sprintf('https://cran.dev/%s/json', package))
   if(res$status_code == 200){
     out <- jsonlite::fromJSON(rawToChar(res$content))
-    if(length(out$devel$docs)){
-      return(out$devel$docs)
-    }
-    if(length(out$release$docs)){
-      return(out$release$docs)
-    }
-    stop('Unexpected response from cran.dev for: ', package)
+    return(sprintf('https://%s.r-universe.dev/%s/doc/manual.html', out[['_user']], out$Package))
   }
   my_universe <- Sys.getenv("MY_UNIVERSE")
   if(package %in% universe_list(my_universe)){
